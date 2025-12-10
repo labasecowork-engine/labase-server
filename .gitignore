@@ -1,0 +1,47 @@
+# Node.js
+node_modules/
+package-lock.json
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+.DS_Store
+
+# WhatsApp Web.js
+storage/
+.wp-auth/
+.wwebjs_auth/
+.wwebjs_cache/
+
+# Entornos y credenciales
+.env
+.cursorrules
+
+# Prisma
+prisma/dev.db
+prisma/dev.db-journal
+prisma/migrations/
+
+# PostgreSQL
+pgdata/
+*.sql
+*.dump
+
+# TypeScript
+*.tsbuildinfo
+*.d.ts
+dist/
+
+# Cache del editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# WhatsApp Web.js
+storage/
+.wp-auth/
+.wwebjs_cache/
+.wwebjs_auth

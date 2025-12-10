@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mensaje de contacto</title>
+  </head>
+  <body
+    style="background-color: #fafaf9; padding: 2rem; font-family: sans-serif"
+  >
+    <div style="max-width: 600px; margin: auto">
+      <div>
+        <img src="cid:logo" alt="logo" width="50" height="50" />
+        <h1
+          style="
+            color: #1c1917;
+            font-size: 1.5rem;
+            font-family: serif;
+            margin-bottom: 0.5rem;
+            text-align: left;
+          "
+        >
+          Mensaje de contacto
+        </h1>
+      </div>
+
+      <p style="color: #57534e; font-size: 0.8rem">
+        Hola administrador,<br /><br />
+        Nos están contactando a través de la página web. Esta información es
+        valiosa y, dado nuestro compromiso con los clientes, debemos responder
+        en un plazo máximo de 48 horas hábiles.
+      </p>
+
+      <div style="font-size: 0.8rem">
+        <div>
+          <span style="color: #44403c; font-weight: bold">Nombre:</span>
+          <span style="color: #525252; margin-left: 4px"><%= name %></span>
+        </div>
+        <div>
+          <span style="color: #44403c; font-weight: bold"
+            >Correo electrónico:</span
+          >
+          <span style="color: #525252; margin-left: 4px"><%= email %></span>
+        </div>
+        <div>
+          <span style="color: #44403c; font-weight: bold"
+            >Número de celular:</span
+          >
+          <span style="color: #525252; margin-left: 4px"
+            ><%= phoneNumber %></span
+          >
+        </div>
+        <div>
+          <span style="color: #44403c; font-weight: bold">Asunto:</span>
+          <span style="color: #525252; margin-left: 4px"><%= reason %></span>
+        </div>
+        <div>
+          <span style="color: #44403c; font-weight: bold">Mensaje:</span>
+          <span style="color: #525252; margin-left: 4px"><%= message %></span>
+        </div>
+      </div>
+
+      <p
+        style="
+          color: #a8a29e;
+          font-size: 0.75rem;
+          text-align: left;
+          margin-top: 1rem;
+        "
+      >
+        Este correo fue enviado automáticamente por el sistema de LaBase.
+      </p>
+    </div>
+  </body>
+</html>

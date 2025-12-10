@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= subject %></title>
+  </head>
+  <body
+    style="background-color: #fafaf9; padding: 2rem; font-family: sans-serif"
+  >
+    <div style="max-width: 600px; margin: auto">
+      <div>
+        <img src="cid:logo" alt="logo" width="50" height="50" />
+        <h1
+          style="
+            color: #1c1917;
+            font-size: 1.5rem;
+            font-family: serif;
+            margin-bottom: 0.5rem;
+            text-align: left;
+          "
+        >
+          <%= subject %>
+        </h1>
+      </div>
+
+      <p style="color: #57534e; font-size: 0.8rem">
+        Hola <%= name %>,<br /><br />
+        Queremos informarte sobre un nuevo anuncio. A continuación, te lo
+        presentamos:
+      </p>
+
+      <div
+        style="
+          font-size: 0.8rem;
+          background-color: #f5f5f4;
+          padding: 1.5rem;
+          color: #44403c;
+        "
+      >
+        <%- content %>
+      </div>
+
+      <p
+        style="
+          color: #a8a29e;
+          font-size: 0.75rem;
+          text-align: left;
+          margin-top: 1rem;
+        "
+      >
+        Este correo fue enviado por un miembro increible de la base.
+      </p>
+    </div>
+  </body>
+</html>

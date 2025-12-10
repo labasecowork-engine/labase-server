@@ -1,0 +1,1 @@
+export { editBrandRoutes } from "./presentation/edit_brand.routes";
