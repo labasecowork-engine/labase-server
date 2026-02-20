@@ -24,7 +24,12 @@ initSocket(server);
 
 // Middlewares
 app.use(morgan(customMorganFormat));
-app.use(cors());
+// TODO: Improve CORS configuration
+app.use(
+  cors({
+    origin: "*",
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
