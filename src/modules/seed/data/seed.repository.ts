@@ -521,28 +521,34 @@ export class SeedRepository {
     const employees = await prisma.employee_details.findMany({
       select: { employee_id: true },
     });
-    const employeeOne = employees[0].employee_id;
-    const employeeTwo = employees[1].employee_id;
-    const employeeThree = employees[2].employee_id;
-    const employeeFour = employees[3].employee_id;
-    const employeeFive = employees[4].employee_id;
+    if (employees.length === 0) {
+      console.warn("No hay empleados para crear mensajes de chat falsos");
+      return;
+    }
+
+    const employeeIds = employees.map((employee) => employee.employee_id);
+    const chatAliases = [
+      "carlos_87",
+      "laura_mz",
+      "diego_r",
+      "sofia_v",
+      "andrea_k",
+    ];
+    const aliasToEmployeeId = Object.fromEntries(
+      chatAliases.map((alias, index) => [
+        alias,
+        employeeIds[index % employeeIds.length],
+      ])
+    );
 
     for (const chatMessageData of fakeChatMessages) {
       await prisma.chat_messages.create({
         data: {
           ...chatMessageData,
           user_id:
-            chatMessageData.user_id === "carlos_87"
-              ? employeeOne
-              : chatMessageData.user_id === "laura_mz"
-              ? employeeTwo
-              : chatMessageData.user_id === "diego_r"
-              ? employeeThree
-              : chatMessageData.user_id === "sofia_v"
-              ? employeeFour
-              : chatMessageData.user_id === "andrea_k"
-              ? employeeFive
-              : employeeOne,
+            aliasToEmployeeId[
+              chatMessageData.user_id as keyof typeof aliasToEmployeeId
+            ] ?? employeeIds[0],
         },
       });
     }

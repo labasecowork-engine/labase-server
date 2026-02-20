@@ -5,7 +5,6 @@ import { SPACE_MESSAGES } from "./space";
 import { RESERVATION_MESSAGES } from "./reservation";
 import { NEWSLETTER_MESSAGES } from "./newsletter";
 import { PRODUCT_MESSAGES } from "./product";
-import { PAYMENT_MESSAGES } from "./payment";
 import { BRAND_MESSAGES } from "./brand";
 import { VISITOR_MESSAGES } from "./visitor";
 import { ATTENDANCE_MESSAGES } from "./attendance";

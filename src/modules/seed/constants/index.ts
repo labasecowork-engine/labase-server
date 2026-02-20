@@ -39,56 +39,6 @@ export const workAreasData = [
 
 export const employeesData = [
   {
-    name: "Susell Shecira Villazana Egoavil",
-    email: "practicante8.xpertice@gmail.com",
-    area: "Administración",
-  },
-  {
-    name: "Jhon Junior Maylle Astucuri",
-    email: "practicante9.xpertice@gmail.com",
-    area: "Administración",
-  },
-  {
-    name: "Jacquelin Mayde Rivera Alvarado",
-    email: "practicante7.xpertice@gmail.com",
-    area: "Administración",
-  },
-  {
-    name: "Edwin Atezana Choque",
-    email: "practicante4.xpertice@gmail.com",
-    area: "Administración",
-  },
-  {
-    name: "Sebastian Marcelo Oscanoa Parra",
-    email: "marketing2.xpertice@gmail.com",
-    area: "Administración",
-  },
-  {
-    name: "Leonela Yustina Chalco Quintanilla",
-    email: "ingenieraia6.xpertice@gmail.com",
-    area: "Software",
-  },
-  {
-    name: "Elizabeth Huarcaya Contreras",
-    email: "ingenieraia8.xpertice@gmail.com",
-    area: "Software",
-  },
-  {
-    name: "Fresia Bibiana Damian Ricra",
-    email: "ingenieraia7.xpertice@gmail.com",
-    area: "Software",
-  },
-  {
-    name: "Jean Pierre Chuquillanqui Montoya",
-    email: "ingenieraia5.xpertice@gmail.com",
-    area: "Software",
-  },
-  {
-    name: "Yhefry Gaspar Almonacid",
-    email: "practicantea5.xpertice@gmail.com",
-    area: "Software",
-  },
-  {
     name: "Alice Mili Inga Espinoza",
     email: "abogado01.grupoaguirre@gmail.com",
     area: "Legal",
@@ -99,16 +49,6 @@ export const employeesData = [
     area: "Legal",
   },
   {
-    name: "Alvaro Jesus Aquino Naupari",
-    email: "practicantea6.xpertice@gmail.com",
-    area: "Legal",
-  },
-  {
-    name: "Jennyfer Vanesa Chuman Aguirre",
-    email: "abogadocivil.grupoaguirre@gmail.com",
-    area: "Legal",
-  },
-  {
     name: "Clara Aguirre Gonzalo",
     email: "caja.grupoaguirre@gmail.com",
     area: "Legal",
@@ -116,11 +56,6 @@ export const employeesData = [
   {
     name: "Rafael Aguirre Gonzalo",
     email: "manager@xpertice.pe",
-    area: "Marketing",
-  },
-  {
-    name: "Leonardo Daniel Casimiro Daga",
-    email: "practicantea3.xpertice@gmail.com",
     area: "Marketing",
   },
 ];

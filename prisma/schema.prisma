@@ -62,14 +62,6 @@ enum reservation_status {
   in_progress
 }
 
-enum payment_status {
-  pending
-  ready
-  approved
-  canceled
-  failed
-}
-
 enum article_status {
   pending
   accepted
@@ -117,18 +109,17 @@ enum reminder_frequency {
   yearly
 }
 
-
 enum employee_kind {
-  intern      
-  contractor  
-  payroll 
+  intern
+  contractor
+  payroll
 }
 
 enum attendance_type {
-  entry      
-  lunch_out   
-  lunch_in     
-  exit       
+  entry
+  lunch_out
+  lunch_in
+  exit
 }
 
 enum work_mode {
@@ -137,26 +128,25 @@ enum work_mode {
 }
 
 model users {
-  id                   String                @id @default(uuid())
-  first_name           String
-  last_name            String
-  email                String                @unique
-  password             String
-  user_type            user_type?
-  profile_image        String?
-  phone                String?
-  birth_date           DateTime?             @db.Date
-  gender               gender                @default(unspecified)
-  status               user_status
-  creation_timestamp   DateTime              @default(now())
+  id                 String      @id @default(uuid())
+  first_name         String
+  last_name          String
+  email              String      @unique
+  password           String
+  user_type          user_type?
+  profile_image      String?
+  phone              String?
+  birth_date         DateTime?   @db.Date
+  gender             gender      @default(unspecified)
+  status             user_status
+  creation_timestamp DateTime    @default(now())
 
-  admin_details        admin_details?
-  employee_details     employee_details?
-  user_details         user_details?
-  reservations         reservation[]         @relation("user_reservations")
-  payment_transactions payment_transaction[] @relation("user_payments")
-  articles             articles[]            @relation("user_articles")
-  chat_messages        chat_messages[]       @relation("user_chat_messages")
+  admin_details    admin_details?
+  employee_details employee_details?
+  user_details     user_details?
+  reservations     reservation[]     @relation("user_reservations")
+  articles         articles[]        @relation("user_articles")
+  chat_messages    chat_messages[]   @relation("user_chat_messages")
 
   visitors visitors[]
 
@@ -324,8 +314,7 @@ model reservation {
   user  users @relation("user_reservations", fields: [user_id], references: [id], onDelete: Cascade)
   space space @relation(fields: [space_id], references: [id], onDelete: Cascade)
 
-  slots                reservation_slot[]
-  payment_transactions payment_transaction[] @relation("reservation_payments")
+  slots reservation_slot[]
 
   @@index([space_id, start_time, end_time])
   @@index([user_id, created_at])
@@ -341,30 +330,6 @@ model reservation_slot {
 
   @@unique([reservation_id, slot_number])
   @@map("reservation_slots")
-}
-
-model payment_transaction {
-  id                 String         @id @default(uuid())
-  transaction_id     String         @db.VarChar(50)
-  purchase_number    String         @unique @db.VarChar(50)
-  amount             Float
-  authorization_code String?        @db.VarChar(20)
-  status             payment_status
-  action_description String?        @db.VarChar(100)
-  card_masked        String?        @db.VarChar(25)
-  transaction_date   String         @db.VarChar(20)
-  error_code         Int?
-  error_message      String?        @db.VarChar(100)
-  created_at         DateTime       @default(now())
-
-  reservation_id String?
-  reservation    reservation? @relation(fields: [reservation_id], references: [id], onDelete: Cascade, name: "reservation_payments")
-
-  user_id String?
-  user    users?  @relation("user_payments", fields: [user_id], references: [id])
-
-  @@index([status, created_at])
-  @@map("payment_transactions")
 }
 
 model article_categories {
@@ -480,53 +445,52 @@ model chat_messages {
 }
 
 model attendance_policy_templates {
-  id                    String   @id @default(uuid())
-  name                  String   @unique
-  grace_entry_minutes    Int      @default(5)
-  early_before_minutes   Int      @default(15)
-  exit_late_minutes      Int      @default(10)
-  require_four_points    Boolean  @default(false)
-  min_daily_hours        Int      @default(8)
-  created_at             DateTime @default(now())
-  updated_at             DateTime @updatedAt
+  id                   String   @id @default(uuid())
+  name                 String   @unique
+  grace_entry_minutes  Int      @default(5)
+  early_before_minutes Int      @default(15)
+  exit_late_minutes    Int      @default(10)
+  require_four_points  Boolean  @default(false)
+  min_daily_hours      Int      @default(8)
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
 
   employee_policies employee_attendance_policies[]
 
   @@map("attendance_policy_templates")
 }
 
-// 📄 models/employee_attendance_policies
 model employee_attendance_policies {
-  id                    String   @id @default(uuid())
-  employee_id           String   @unique
-  template_id           String?
-  grace_entry_minutes    Int      @default(5)
-  early_before_minutes   Int      @default(15)
-  exit_late_minutes      Int      @default(10)
-  require_four_points    Boolean  @default(false)
-  min_daily_hours        Int      @default(8)
-  created_at             DateTime @default(now())
-  updated_at             DateTime @updatedAt
+  id                   String   @id @default(uuid())
+  employee_id          String   @unique
+  template_id          String?
+  grace_entry_minutes  Int      @default(5)
+  early_before_minutes Int      @default(15)
+  exit_late_minutes    Int      @default(10)
+  require_four_points  Boolean  @default(false)
+  min_daily_hours      Int      @default(8)
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
 
-  employee  employee_details              @relation(fields: [employee_id], references: [employee_id], onDelete: Cascade)
-  template  attendance_policy_templates?  @relation(fields: [template_id], references: [id], onDelete: SetNull)
+  employee employee_details             @relation(fields: [employee_id], references: [employee_id], onDelete: Cascade)
+  template attendance_policy_templates? @relation(fields: [template_id], references: [id], onDelete: SetNull)
 
   @@map("employee_attendance_policies")
 }
 
 model employee_schedules {
-  id               String    @id @default(uuid())
-  employee_id      String
-  weekday          Int 
-  mode             work_mode 
-  expected_points  Int       @default(2) 
-  entry_time       DateTime? @db.Time   
-  lunch_out_time   DateTime? @db.Time  
-  lunch_in_time    DateTime? @db.Time   
-  exit_time        DateTime? @db.Time  
+  id                String    @id @default(uuid())
+  employee_id       String
+  weekday           Int
+  mode              work_mode
+  expected_points   Int       @default(2)
+  entry_time        DateTime? @db.Time
+  lunch_out_time    DateTime? @db.Time
+  lunch_in_time     DateTime? @db.Time
+  exit_time         DateTime? @db.Time
   min_lunch_minutes Int?
-  created_at       DateTime @default(now())
-  updated_at       DateTime @updatedAt
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
 
   employee employee_details @relation(fields: [employee_id], references: [employee_id], onDelete: Cascade)
 
@@ -536,29 +500,28 @@ model employee_schedules {
 }
 
 model attendance_points {
-  id           String          @id @default(uuid())
-  employee_id  String
-  date         DateTime        @db.Date
-  mark_type    attendance_type
-  mark_time    DateTime        @db.Time
+  id          String          @id @default(uuid())
+  employee_id String
+  date        DateTime        @db.Date
+  mark_type   attendance_type
+  mark_time   DateTime        @db.Time
 
-  in_schedule  Boolean         @default(true)
-  is_late      Boolean         @default(false)
-  is_early     Boolean         @default(false)
-  is_remote    Boolean         @default(false)
+  in_schedule Boolean @default(true)
+  is_late     Boolean @default(false)
+  is_early    Boolean @default(false)
+  is_remote   Boolean @default(false)
 
-  is_manual            Boolean   @default(false)
-  edited_by_admin_id   String?   
-  edited_at            DateTime?
-  edit_reason          String?
+  is_manual          Boolean   @default(false)
+  edited_by_admin_id String?
+  edited_at          DateTime?
+  edit_reason        String?
 
   note String @default("")
 
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-
-  employee  employee_details @relation(fields: [employee_id], references: [employee_id], onDelete: Cascade)
+  employee employee_details @relation(fields: [employee_id], references: [employee_id], onDelete: Cascade)
 
   @@unique([employee_id, date, mark_type])
   @@index([employee_id, date])

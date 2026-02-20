@@ -10,7 +10,6 @@ import { redisClient } from "./config/redis";
 import { APP_URL, PORT } from "./config/env";
 import { displayWelcomeMessage } from "./utils";
 import { customMorganFormat } from "./utils/cli";
-import { startWhatsAppBot } from "./modules/bot-whatsapp/application/bot/whatsapp.bot";
 import { buildHttpResponse } from "./utils/";
 import { HttpStatusCodes } from "./constants/http_status_codes";
 
@@ -60,24 +59,9 @@ const main = async () => {
     console.error("[Redis] No conectó:", e);
   }
 
-  // Whatsapp bot
-  /* 
-  try {
-    await startWhatsAppBot();
-    console.log(
-      "[WhatsApp] Bot inicializado (si es primera vez, revisa el QR en logs)"
-    );
-  } catch (e) {
-    console.error("[WhatsApp] No inició:", e);
-  }
-    */
-
   server.listen(PORT, () => {
     displayWelcomeMessage(appUrl);
     console.log(`[HTTP] Server on :${PORT}`);
-    console.log(
-      "[WhatsApp] Mirar los logs para ver el QR: pm2 logs labase-server"
-    );
   });
 };
 
