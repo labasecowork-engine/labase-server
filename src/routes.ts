@@ -19,6 +19,10 @@ import { companyRouter } from "./modules/company";
 import visitorRouter from "./modules/visitor";
 import reminderRouter from "./modules/reminders/features";
 import communicationRouter from "./modules/communication";
+import { lockerRouter } from "./modules/lockers";
+import { parkingRouter } from "./modules/parking";
+import { clientAttendanceRouter } from "./modules/client-attendance";
+import { contractRouter } from "./modules/contracts";
 
 const router = Router();
 const API_VERSION = "/api/v1";
@@ -49,5 +53,9 @@ router.use(`${API_VERSION}/`, companyRouter);
 router.use(`${API_VERSION}/visitors`, visitorRouter);
 router.use(`${API_VERSION}/reminders`, reminderRouter);
 router.use(`${API_VERSION}/communication`, communicationRouter);
+router.use(`${API_VERSION}/lockers`, lockerRouter);
+router.use(`${API_VERSION}/parking`, parkingRouter);
+router.use(`${API_VERSION}/client-attendance`, clientAttendanceRouter);
+router.use(`${API_VERSION}/`, contractRouter);
 
 export default router;

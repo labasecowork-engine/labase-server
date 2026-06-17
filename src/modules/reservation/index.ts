@@ -8,6 +8,15 @@ import { getReservationsRoutes } from "./features/get_reservations";
 import { detailReservationRoutes } from "./features/detail_reservation";
 import { cancelReservationRoutes } from "./features/cancel_reservation";
 
+// Catálogo de planes (membresías) — cuelga de /reservations/plans.
+import { listPlansRoutes } from "./features/list_plans/presentation/list_plans.routes";
+import { planStatsRoutes } from "./features/plan_stats/presentation/plan_stats.routes";
+import { listPlanSpacesRoutes } from "./features/list_plan_spaces/presentation/list_plan_spaces.routes";
+import { createPlanRoutes } from "./features/create_plan/presentation/create_plan.routes";
+import { updatePlanRoutes } from "./features/update_plan/presentation/update_plan.routes";
+import { deletePlanRoutes } from "./features/delete_plan/presentation/delete_plan.routes";
+import { getPlanRoutes } from "./features/get_plan/presentation/get_plan.routes";
+
 export const reservationRouter = Router();
 
 reservationRouter.use("/", createReservationRoutes);
@@ -15,6 +24,18 @@ reservationRouter.use("/", getReservationsRoutes);
 reservationRouter.use("/", checkAvailabilityRoutes);
 reservationRouter.use("/me", listMyReservationsRoutes);
 reservationRouter.use("/", resolveQrRoutes);
+
+// Las rutas de planes se registran ANTES del GET /reservations/:id para que
+// /reservations/plans (y sus estáticas /stats, /spaces) hagan match primero.
+// Dentro del bloque, GET /plans/:id va al final, tras /plans/stats y /plans/spaces.
+reservationRouter.use("/", listPlansRoutes);
+reservationRouter.use("/", planStatsRoutes);
+reservationRouter.use("/", listPlanSpacesRoutes);
+reservationRouter.use("/", createPlanRoutes);
+reservationRouter.use("/", updatePlanRoutes);
+reservationRouter.use("/", deletePlanRoutes);
+reservationRouter.use("/", getPlanRoutes);
+
 reservationRouter.use("/", detailReservationRoutes);
 reservationRouter.use("/", cancelReservationRoutes);
 

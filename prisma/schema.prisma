@@ -127,6 +127,29 @@ enum work_mode {
   remote
 }
 
+enum plan_category {
+  individual
+  team
+  office
+  shared_space
+}
+
+enum billing_period {
+  day
+  week
+  month
+  year
+}
+
+enum plan_label_color {
+  gold
+  blue
+  green
+  purple
+  rose
+  stone
+}
+
 model users {
   id                 String      @id @default(uuid())
   first_name         String
@@ -149,6 +172,11 @@ model users {
   chat_messages    chat_messages[]   @relation("user_chat_messages")
 
   visitors visitors[]
+
+  locker_deliveries locker_delivery[] @relation("user_locker_deliveries")
+  parking_records   parking_record[]  @relation("user_parking_records")
+  client_attendance client_attendance[] @relation("user_client_attendance")
+  contracts         contract[]          @relation("user_contracts")
 
   @@map("users")
 }
@@ -246,6 +274,7 @@ model space {
   prices         price[]
   reservations   reservation[]
   visitors       visitors[]
+  plan_spaces    plan_space[]
 
   @@map("spaces")
 }
@@ -297,6 +326,37 @@ model price {
   @@map("prices")
 }
 
+model plan {
+  id              String           @id @default(uuid())
+  name            String
+  price           Decimal?         @db.Decimal(10, 2)
+  category        plan_category
+  billing_period  billing_period
+  target_audience String?
+  label_color     plan_label_color @default(gold)
+  description     String?
+  features        String[]
+  created_at      DateTime         @default(now())
+  updated_at      DateTime         @updatedAt
+
+  spaces plan_space[]
+
+  @@index([category])
+  @@map("plans")
+}
+
+model plan_space {
+  plan_id  String
+  space_id String
+
+  plan  plan  @relation(fields: [plan_id], references: [id], onDelete: Cascade)
+  space space @relation(fields: [space_id], references: [id], onDelete: Cascade)
+
+  @@id([plan_id, space_id])
+  @@index([space_id])
+  @@map("plan_spaces")
+}
+
 model reservation {
   id              String             @id @default(uuid())
   purchase_number String             @unique
@@ -310,9 +370,11 @@ model reservation {
   price           Decimal
   status          reservation_status @default(pending)
   created_at      DateTime           @default(now())
+  locker_id       String?
 
   user  users @relation("user_reservations", fields: [user_id], references: [id], onDelete: Cascade)
   space space @relation(fields: [space_id], references: [id], onDelete: Cascade)
+  locker locker? @relation(fields: [locker_id], references: [id], onDelete: SetNull)
 
   slots reservation_slot[]
 
@@ -527,4 +589,188 @@ model attendance_points {
   @@index([employee_id, date])
   @@index([date])
   @@map("attendance_points")
+}
+
+enum locker_delivery_type {
+  normal
+  vip
+}
+
+// Lockers físicos del coworking (49). El estado (libre/ocupado/vip/pendiente)
+// se deriva en tiempo de consulta a partir de las entregas activas y las
+// reservas con locker asignado; no se almacena.
+model locker {
+  id         String   @id @default(uuid())
+  number     Int      @unique
+  is_vip     Boolean  @default(false)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  deliveries   locker_delivery[]
+  reservations reservation[]
+
+  @@map("lockers")
+}
+
+// Entrega de una llave a una persona. `user_id` referencia al cliente/empleado
+// registrado cuando existe (de ahí se obtiene su rol y empresa); los campos
+// person_name/document/company son el snapshot para externos o para preservar
+// el registro histórico. Una entrega activa es la que tiene returned_at = null.
+model locker_delivery {
+  id           String               @id @default(uuid())
+  locker_id    String
+  user_id      String?
+  person_name  String
+  document     String?
+  company      String?
+  type         locker_delivery_type @default(normal)
+  observations String?
+  delivered_at DateTime             @default(now())
+  returned_at  DateTime?
+
+  locker locker @relation(fields: [locker_id], references: [id], onDelete: Cascade)
+  user   users? @relation("user_locker_deliveries", fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@index([locker_id, returned_at])
+  @@index([user_id])
+  @@map("locker_deliveries")
+}
+
+enum parking_record_status {
+  active
+  exited
+}
+
+// Espacios físicos del estacionamiento (E1…E5). El estado libre/ocupado se
+// deriva en consulta a partir de los registros activos no archivados.
+model parking_space {
+  id         String   @id @default(uuid())
+  code       String   @unique
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  records parking_record[]
+
+  @@map("parking_spaces")
+}
+
+// Registro de ingreso/salida de un vehículo. Soporta hasta 2 sesiones
+// (entrada/salida) para el re-ingreso el mismo día. `user_id` referencia al
+// cliente registrado cuando existe; client_name/company/plate son snapshot.
+model parking_record {
+  id            String                @id @default(uuid())
+  user_id       String?
+  client_name   String
+  company       String?
+  plate         String
+  space_id      String
+  date          DateTime              @db.Date
+  entry_time_1  DateTime
+  exit_time_1   DateTime?
+  entry_time_2  DateTime?
+  exit_time_2   DateTime?
+  total_minutes Int?
+  status        parking_record_status @default(active)
+  archived      Boolean               @default(false)
+  observations  String?
+  created_at    DateTime              @default(now())
+
+  space parking_space @relation(fields: [space_id], references: [id])
+  user  users?        @relation("user_parking_records", fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@index([space_id, status, archived])
+  @@index([date])
+  @@map("parking_records")
+}
+
+enum client_attendance_status {
+  present
+  exited
+}
+
+enum client_attendance_source {
+  contract
+  reservation
+}
+
+// Asistencia de clientes (DISTINTO del `attendance` de empleados). Control de
+// ingreso/salida vinculado a contratos/reservas activas, con hora límite y
+// hasta 2 sesiones. `user_id` referencia al cliente; el resto es snapshot.
+model client_attendance {
+  id            String                   @id @default(uuid())
+  user_id       String?
+  client_name   String
+  company       String?
+  date          DateTime                 @db.Date
+  entry_time_1  DateTime
+  exit_time_1   DateTime?
+  entry_time_2  DateTime?
+  exit_time_2   DateTime?
+  limit_time    DateTime?
+  locker_ref    String?
+  total_minutes Int?
+  status        client_attendance_status @default(present)
+  source        client_attendance_source @default(reservation)
+  archived      Boolean                  @default(false)
+  observations  String?
+  created_at    DateTime                 @default(now())
+
+  user users? @relation("user_client_attendance", fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@index([status, archived])
+  @@index([date])
+  @@map("client_attendance")
+}
+
+// Contratos de alquiler de espacios. El estado de pago / monto pendiente /
+// progreso se DERIVAN de la suma de `payments` contra `rent_amount` (no se
+// almacena un estado denormalizado). `user_id` referencia al cliente si existe
+// como usuario de la plataforma; el resto de campos son snapshot del contrato.
+model contract {
+  id                   String    @id @default(uuid())
+  user_id              String?
+  client_name          String
+  company              String?
+  responsible          String?
+  document             String?
+  phone                String?
+  address              String?
+  follow_up            String?
+  plan                 String?
+  contract_type        String?
+  space_name           String?
+  rent_reference_start DateTime? @db.Date
+  start_date           DateTime  @db.Date
+  end_date             DateTime  @db.Date
+  rent_amount          Decimal   @default(0) @db.Decimal(10, 2)
+  monthly_payment      Decimal?  @db.Decimal(10, 2)
+  invoice_number       String?
+  wifi                 String?
+  locker_ref           String?
+  num_users            Int?
+  archived             Boolean   @default(false)
+  created_at           DateTime  @default(now())
+  updated_at           DateTime  @updatedAt
+
+  user     users?             @relation("user_contracts", fields: [user_id], references: [id], onDelete: SetNull)
+  payments contract_payment[]
+
+  @@index([archived, end_date])
+  @@map("contracts")
+}
+
+// Historial de pagos de un contrato. El monto pagado de un contrato es la suma
+// de sus pagos; el estado (paid/pending/partial) se deriva en lectura.
+model contract_payment {
+  id          String   @id @default(uuid())
+  contract_id String
+  amount      Decimal  @db.Decimal(10, 2)
+  paid_at     DateTime @default(now())
+  note        String?
+
+  contract contract @relation(fields: [contract_id], references: [id], onDelete: Cascade)
+
+  @@index([contract_id])
+  @@map("contract_payments")
 }

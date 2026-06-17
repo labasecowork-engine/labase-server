@@ -39,6 +39,8 @@ export class SeedRepository {
     await this.createEmployeesWithAssignments();
     await this.createCategoriesArticles();
     await this.createArticles();
+    await this.createLockers();
+    await this.createParkingSpaces();
     // TODO: Crear semilla a partir del excel de visitantes
 
     return { message: "Database seeded successfully for production" };
@@ -59,8 +61,200 @@ export class SeedRepository {
     await this.createFakeProducts(brands);
     await this.createRemindersFake();
     await this.createFakeChatMessages();
+    await this.createLockers();
+    await this.createLockerSamples();
+    await this.createParkingSpaces();
+    await this.createParkingSamples();
+    await this.createClientAttendanceSamples();
 
     return { message: "Database seeded successfully for development" };
+  }
+
+  // Los 49 lockers físicos del coworking. Algunos marcados como VIP.
+  async createLockers() {
+    const VIP_NUMBERS = new Set([5, 12, 20, 33, 42]);
+    await prisma.locker.createMany({
+      data: Array.from({ length: 49 }, (_, index) => ({
+        number: index + 1,
+        is_vip: VIP_NUMBERS.has(index + 1),
+      })),
+      skipDuplicates: true,
+    });
+    console.log("Lockers creados (49)");
+  }
+
+  // Los 5 espacios de estacionamiento (E1…E5).
+  async createParkingSpaces() {
+    await prisma.parking_space.createMany({
+      data: Array.from({ length: 5 }, (_, index) => ({
+        code: `E${index + 1}`,
+      })),
+      skipDuplicates: true,
+    });
+    console.log("Espacios de parking creados (5)");
+  }
+
+  // Registros de ejemplo de estacionamiento (con salida) + uno activo (ocupado).
+  async createParkingSamples() {
+    const spaces = await prisma.parking_space.findMany({
+      select: { id: true, code: true },
+    });
+    const byCode = new Map(spaces.map((s) => [s.code, s.id]));
+    const at = (d: string, t: string) => new Date(`${d}T${t}:00`);
+
+    const samples = [
+      { code: "E5", client: "Cristhiam Paolo Villavicencio Lizbarraga", company: "ALICORP S.A.A", plate: "—", date: "2026-05-22", in: "13:14", out: "18:28" },
+      { code: "E2", client: "Olivares Luna Jose Diego", company: "ENAZUL S.A.C.", plate: "X2Z-839", date: "2026-05-25", in: "09:07", out: "14:21" },
+      { code: "E3", client: "Durand Cornejo Jose Jhonathan Sabino", company: "CONTASISCORP S.A.C.", plate: "W4Y-526", date: "2026-05-25", in: "09:08", out: "14:21" },
+      { code: "E1", client: "Ataypoma Crispin Wilfredo Pariz", company: "PERSONA NATURAL", plate: "BZN-085", date: "2026-05-30", in: "13:11", out: "16:24" },
+    ];
+
+    for (const s of samples) {
+      const space_id = byCode.get(s.code);
+      if (!space_id) continue;
+      const entry = at(s.date, s.in);
+      const exit = at(s.date, s.out);
+      const total = Math.max(
+        0,
+        Math.round((exit.getTime() - entry.getTime()) / 60000)
+      );
+      await prisma.parking_record.create({
+        data: {
+          space_id,
+          client_name: s.client,
+          company: s.company,
+          plate: s.plate,
+          date: new Date(s.date),
+          entry_time_1: entry,
+          exit_time_1: exit,
+          total_minutes: total,
+          status: "exited",
+        },
+      });
+    }
+
+    // Un vehículo actualmente dentro (E4 ocupado), hoy.
+    const e4 = byCode.get("E4");
+    if (e4) {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      await prisma.parking_record.create({
+        data: {
+          space_id: e4,
+          client_name: "Olivares Luna Jose Diego",
+          company: "ENAZUL S.A.C.",
+          plate: "X2Z-839",
+          date: new Date(todayStr),
+          entry_time_1: at(todayStr, "08:30"),
+          status: "active",
+        },
+      });
+    }
+    console.log("Registros de parking de ejemplo creados");
+  }
+
+  // Registros de ejemplo de asistencia de clientes (2 presentes hoy + salidos).
+  async createClientAttendanceSamples() {
+    const at = (d: string, t: string) => new Date(`${d}T${t}:00`);
+    const p2 = (n: number) => String(n).padStart(2, "0");
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${p2(now.getMonth() + 1)}-${p2(now.getDate())}`;
+
+    const presents = [
+      { name: "Edith Muñoz Lujan", company: "ENAZUL S.A.C." },
+      { name: "Fiorela Lizbeth Herrera Salome", company: "ENAZUL S.A.C." },
+    ];
+    for (const person of presents) {
+      await prisma.client_attendance.create({
+        data: {
+          client_name: person.name,
+          company: person.company,
+          date: new Date(todayStr),
+          entry_time_1: at(todayStr, "15:01"),
+          limit_time: at(todayStr, "19:00"),
+          status: "present",
+          source: "contract",
+        },
+      });
+    }
+
+    const exits = [
+      { name: "Fidel Meza Taipe", company: "Constasiscorp", date: "2026-06-15", in: "10:10", out: "14:31" },
+      { name: "Olivares Luna Jose Diego", company: "ALICORP S.A.A", date: "2026-06-09", in: "12:01", out: "14:56" },
+      { name: "Ataypoma Crispin Wilfredo Pariz", company: "ALICORP S.A.A", date: "2026-06-09", in: "10:46", out: "14:56" },
+    ];
+    for (const e of exits) {
+      const entry = at(e.date, e.in);
+      const exit = at(e.date, e.out);
+      const total = Math.max(
+        0,
+        Math.round((exit.getTime() - entry.getTime()) / 60000)
+      );
+      await prisma.client_attendance.create({
+        data: {
+          client_name: e.name,
+          company: e.company,
+          date: new Date(e.date),
+          entry_time_1: entry,
+          exit_time_1: exit,
+          total_minutes: total,
+          status: "exited",
+          source: "contract",
+        },
+      });
+    }
+    console.log("Registros de asistencia de clientes de ejemplo creados");
+  }
+
+  // Datos de ejemplo para ver el módulo con contenido: entregas activas y
+  // reservas con locker asignado.
+  async createLockerSamples() {
+    const sampleDeliveries = [
+      {
+        number: 42,
+        person_name: "Rafael Martín Aguirre Gonzalo",
+        company: "FINACORP",
+        type: "vip" as const,
+      },
+      {
+        number: 13,
+        person_name: "Michael Cristian Chamorro Vargas",
+        company: "ENAZUL S.A.C.",
+        type: "normal" as const,
+      },
+    ];
+
+    for (const sample of sampleDeliveries) {
+      const locker = await prisma.locker.findUnique({
+        where: { number: sample.number },
+        select: { id: true },
+      });
+      if (!locker) continue;
+      await prisma.locker_delivery.create({
+        data: {
+          locker_id: locker.id,
+          person_name: sample.person_name,
+          company: sample.company,
+          type: sample.type,
+        },
+      });
+    }
+
+    // Asigna un locker fijo a las primeras reservas (pestaña "Por reserva").
+    const reservations = await prisma.reservation.findMany({
+      take: 2,
+      select: { id: true },
+    });
+    const assignableLockers = await prisma.locker.findMany({
+      where: { number: { in: [7, 9] } },
+      select: { id: true },
+    });
+    for (let i = 0; i < reservations.length && i < assignableLockers.length; i++) {
+      await prisma.reservation.update({
+        where: { id: reservations[i].id },
+        data: { locker_id: assignableLockers[i].id },
+      });
+    }
+    console.log("Datos de ejemplo de lockers creados");
   }
 
   async createAdminUser() {

@@ -1,6 +1,10 @@
 import { config } from "dotenv";
+import { expand } from "dotenv-expand";
 
-config();
+// `expand` resuelve referencias `${VAR}` dentro del .env (p. ej.
+// DATABASE_URL="${DATABASE_URL_LOCAL}"). Sin esto, dotenv deja el literal y la
+// conexión a la DB falla en runtime.
+expand(config());
 
 // ENVIRONMENT
 export const ENVIRONMENT = process.env.ENVIRONMENT;
