@@ -1,13 +1,15 @@
 import prisma from "../../../config/prisma_client";
 import {
   access_type,
-  article_status,
   attendance_type,
   duration_unit,
   price_mode,
   space_type,
   unit_of_measure,
   reminder_frequency,
+  plan_category,
+  billing_period,
+  plan_label_color,
 } from "@prisma/client";
 import {
   employeesData,
@@ -16,8 +18,6 @@ import {
   workAreasData,
   fakeClientsData,
   fakeReservationsData,
-  categoriesArticles,
-  articlesData,
   fakeVisitorsData,
   brandList,
   productList,
@@ -35,10 +35,9 @@ export class SeedRepository {
   async seedProduction() {
     await this.createAdminUser();
     await this.createSpacesAndPrices();
+    await this.createPlans();
     await this.createNewsletters();
     await this.createEmployeesWithAssignments();
-    await this.createCategoriesArticles();
-    await this.createArticles();
     await this.createLockers();
     await this.createParkingSpaces();
     // TODO: Crear semilla a partir del excel de visitantes
@@ -50,10 +49,9 @@ export class SeedRepository {
     await this.createAdminUser();
     await this.createClientUser();
     await this.createSpacesAndPrices();
+    await this.createPlans();
     await this.createNewsletters();
     await this.createEmployeesWithAssignments();
-    await this.createCategoriesArticles();
-    await this.createArticles();
     await this.createFakeClientsAndReservations();
     await this.createFakeVisitors();
     await this.createAttendanceRecords();
@@ -66,6 +64,7 @@ export class SeedRepository {
     await this.createParkingSpaces();
     await this.createParkingSamples();
     await this.createClientAttendanceSamples();
+    await this.createContracts();
 
     return { message: "Database seeded successfully for development" };
   }
@@ -203,6 +202,317 @@ export class SeedRepository {
       });
     }
     console.log("Registros de asistencia de clientes de ejemplo creados");
+  }
+
+  // Catálogo de planes de membresía que ofrece el coworking. Cada plan se
+  // conecta con los espacios incluidos vía la tabla puente `plan_spaces`.
+  // El precio `null` representa un plan "a medida".
+  async createPlans() {
+    const plansData: Array<{
+      id: string;
+      name: string;
+      price: number | null;
+      category: plan_category;
+      billing_period: billing_period;
+      target_audience: string;
+      label_color: plan_label_color;
+      description: string;
+      features: string[];
+      space_ids: string[];
+    }> = [
+      {
+        id: "50000000-0000-0000-0000-000000000001",
+        name: "Pase Diario",
+        price: 25,
+        category: "individual",
+        billing_period: "day",
+        target_audience: "Freelancers y nómadas digitales",
+        label_color: "gold",
+        description:
+          "Acceso por un día a la zona de coworking abierto, con internet de alta velocidad y café de cortesía.",
+        features: [
+          "Acceso de 9:00 a 19:00",
+          "Internet de alta velocidad",
+          "Café y agua ilimitados",
+          "Acceso a la sala común",
+        ],
+        space_ids: ["00000000-0000-0000-0000-000000000001"],
+      },
+      {
+        id: "50000000-0000-0000-0000-000000000002",
+        name: "Membresía Flex",
+        price: 199,
+        category: "individual",
+        billing_period: "month",
+        target_audience: "Profesionales independientes",
+        label_color: "blue",
+        description:
+          "10 días de acceso al mes a la zona de coworking, ideal para quienes combinan trabajo remoto y presencial.",
+        features: [
+          "10 días de acceso al mes",
+          "Internet de alta velocidad",
+          "Casillero (locker) opcional",
+          "Descuentos en salas de reunión",
+        ],
+        space_ids: ["00000000-0000-0000-0000-000000000001"],
+      },
+      {
+        id: "50000000-0000-0000-0000-000000000003",
+        name: "Membresía Full",
+        price: 299,
+        category: "individual",
+        billing_period: "month",
+        target_audience: "Profesionales y emprendedores",
+        label_color: "green",
+        description:
+          "Acceso ilimitado de lunes a sábado a la zona de coworking, con beneficios de comunidad.",
+        features: [
+          "Acceso ilimitado de lunes a sábado",
+          "Internet de alta velocidad",
+          "Locker incluido",
+          "2 horas de sala de reunión al mes",
+          "Acceso a eventos de la comunidad",
+        ],
+        space_ids: [
+          "00000000-0000-0000-0000-000000000001",
+          "00000000-0000-0000-0000-000000000005",
+        ],
+      },
+      {
+        id: "50000000-0000-0000-0000-000000000004",
+        name: "Plan Equipo",
+        price: 899,
+        category: "team",
+        billing_period: "month",
+        target_audience: "Equipos y startups de 3 a 5 personas",
+        label_color: "purple",
+        description:
+          "Espacio semiprivado dedicado para tu equipo, con acceso a salas y beneficios corporativos.",
+        features: [
+          "Hasta 5 colaboradores",
+          "Zona semiprivada dedicada",
+          "5 horas de sala de reunión al mes",
+          "Lockers para el equipo",
+          "Recepción de correspondencia",
+        ],
+        space_ids: [
+          "00000000-0000-0000-0000-000000000005",
+          "00000000-0000-0000-0000-000000000002",
+        ],
+      },
+      {
+        id: "50000000-0000-0000-0000-000000000005",
+        name: "Oficina Privada",
+        price: null,
+        category: "office",
+        billing_period: "month",
+        target_audience: "Empresas que necesitan privacidad",
+        label_color: "stone",
+        description:
+          "Oficina cerrada y amoblada para tu empresa, con acceso 24/7 y servicios incluidos. Precio a medida según el tamaño.",
+        features: [
+          "Oficina privada amoblada",
+          "Acceso 24/7",
+          "Internet dedicado",
+          "Domicilio fiscal",
+          "Salas de reunión incluidas",
+          "Soporte administrativo",
+        ],
+        space_ids: [
+          "00000000-0000-0000-0000-000000000008",
+          "00000000-0000-0000-0000-00000000000b",
+        ],
+      },
+      {
+        id: "50000000-0000-0000-0000-000000000006",
+        name: "Sala por Horas",
+        price: 40,
+        category: "shared_space",
+        billing_period: "day",
+        target_audience: "Reuniones, capacitaciones y entrevistas",
+        label_color: "rose",
+        description:
+          "Alquila una sala equipada por horas para tus reuniones o capacitaciones, sin necesidad de membresía.",
+        features: [
+          "Sala equipada con proyector",
+          "Pizarra y útiles",
+          "Internet de alta velocidad",
+          "Café para los asistentes",
+        ],
+        space_ids: [
+          "00000000-0000-0000-0000-000000000006",
+          "00000000-0000-0000-0000-000000000007",
+        ],
+      },
+    ];
+
+    for (const plan of plansData) {
+      const { space_ids, ...scalar } = plan;
+      await prisma.plan.create({
+        data: {
+          ...scalar,
+          spaces: {
+            create: space_ids.map((space_id) => ({ space_id })),
+          },
+        },
+      });
+    }
+    console.log(`Planes creados (${plansData.length})`);
+  }
+
+  // Contratos de ejemplo con su historial de pagos. El estado de pago
+  // (pagado/parcial/pendiente) se DERIVA de la suma de pagos contra
+  // `rent_amount` (monto total del contrato), por eso no se almacena.
+  async createContracts() {
+    const contractsData: Array<{
+      client_name: string;
+      company: string;
+      responsible: string;
+      document: string;
+      phone: string;
+      address: string;
+      plan: string;
+      contract_type: string;
+      space_name: string;
+      start_date: string;
+      end_date: string;
+      rent_amount: number; // monto total del contrato
+      monthly_payment: number;
+      invoice_number: string;
+      wifi: string;
+      locker_ref: string | null;
+      num_users: number;
+      archived: boolean;
+      payments: Array<{ amount: number; paid_at: string; note: string }>;
+    }> = [
+      {
+        // Activo, al día (pagado completo) → estado "pagado".
+        client_name: "ALICORP S.A.A",
+        company: "ALICORP S.A.A",
+        responsible: "Cristhiam Paolo Villavicencio Lizbarraga",
+        document: "20100055237",
+        phone: "964100100",
+        address: "Av. Giráldez 245, Huancayo",
+        plan: "Plan Equipo",
+        contract_type: "Alquiler de espacio semiprivado",
+        space_name: "Hangar",
+        start_date: "2026-01-01",
+        end_date: "2026-06-30",
+        rent_amount: 5400, // 6 meses x 900
+        monthly_payment: 900,
+        invoice_number: "F001-00120",
+        wifi: "LaBase_Alicorp",
+        locker_ref: "L-07",
+        num_users: 5,
+        archived: false,
+        payments: [
+          { amount: 900, paid_at: "2026-01-03", note: "Pago enero" },
+          { amount: 900, paid_at: "2026-02-03", note: "Pago febrero" },
+          { amount: 900, paid_at: "2026-03-03", note: "Pago marzo" },
+          { amount: 900, paid_at: "2026-04-03", note: "Pago abril" },
+          { amount: 900, paid_at: "2026-05-03", note: "Pago mayo" },
+          { amount: 900, paid_at: "2026-06-03", note: "Pago junio" },
+        ],
+      },
+      {
+        // Activo, con pagos parciales → estado "parcial".
+        client_name: "ENAZUL S.A.C.",
+        company: "ENAZUL S.A.C.",
+        responsible: "Edith Muñoz Lujan",
+        document: "20486754321",
+        phone: "964200200",
+        address: "Jr. Ancash 120, El Tambo",
+        plan: "Oficina Privada",
+        contract_type: "Alquiler de oficina privada",
+        space_name: "Bunker 01",
+        start_date: "2026-01-01",
+        end_date: "2026-12-31",
+        rent_amount: 18000, // 12 meses x 1500
+        monthly_payment: 1500,
+        invoice_number: "F001-00121",
+        wifi: "LaBase_Enazul",
+        locker_ref: "L-12",
+        num_users: 4,
+        archived: false,
+        payments: [
+          { amount: 1500, paid_at: "2026-01-05", note: "Pago enero" },
+          { amount: 1500, paid_at: "2026-02-05", note: "Pago febrero" },
+          { amount: 1500, paid_at: "2026-03-05", note: "Pago marzo" },
+          { amount: 1500, paid_at: "2026-04-05", note: "Pago abril" },
+          { amount: 1500, paid_at: "2026-05-05", note: "Pago mayo" },
+        ],
+      },
+      {
+        // Recién iniciado, sin pagos aún → estado "pendiente".
+        client_name: "CONTASISCORP S.A.C.",
+        company: "CONTASISCORP S.A.C.",
+        responsible: "Durand Cornejo Jose Jhonathan Sabino",
+        document: "20601239874",
+        phone: "964300300",
+        address: "Calle Real 850, Huancayo",
+        plan: "Membresía Full",
+        contract_type: "Membresía individual",
+        space_name: "La Base Operativa",
+        start_date: "2026-06-01",
+        end_date: "2026-11-30",
+        rent_amount: 1794, // 6 meses x 299
+        monthly_payment: 299,
+        invoice_number: "F001-00122",
+        wifi: "LaBase_Operativa",
+        locker_ref: null,
+        num_users: 1,
+        archived: false,
+        payments: [],
+      },
+      {
+        // Contrato finalizado y archivado (pagado completo).
+        client_name: "FINACORP",
+        company: "FINACORP S.A.C.",
+        responsible: "Rafael Martín Aguirre Gonzalo",
+        document: "20559988776",
+        phone: "964400400",
+        address: "Av. Huancavelica 410, Huancayo",
+        plan: "Oficina Privada",
+        contract_type: "Alquiler de oficina privada",
+        space_name: "Base de Mando",
+        start_date: "2025-07-01",
+        end_date: "2025-12-31",
+        rent_amount: 10800, // 6 meses x 1800
+        monthly_payment: 1800,
+        invoice_number: "F001-00098",
+        wifi: "LaBase_Finacorp",
+        locker_ref: "L-42",
+        num_users: 6,
+        archived: true,
+        payments: [
+          { amount: 1800, paid_at: "2025-07-04", note: "Pago julio" },
+          { amount: 1800, paid_at: "2025-08-04", note: "Pago agosto" },
+          { amount: 1800, paid_at: "2025-09-04", note: "Pago septiembre" },
+          { amount: 1800, paid_at: "2025-10-04", note: "Pago octubre" },
+          { amount: 1800, paid_at: "2025-11-04", note: "Pago noviembre" },
+          { amount: 1800, paid_at: "2025-12-04", note: "Pago diciembre" },
+        ],
+      },
+    ];
+
+    for (const c of contractsData) {
+      const { payments, ...contract } = c;
+      await prisma.contract.create({
+        data: {
+          ...contract,
+          start_date: new Date(contract.start_date),
+          end_date: new Date(contract.end_date),
+          payments: {
+            create: payments.map((p) => ({
+              amount: p.amount,
+              paid_at: new Date(p.paid_at),
+              note: p.note,
+            })),
+          },
+        },
+      });
+    }
+    console.log(`Contratos creados (${contractsData.length})`);
   }
 
   // Datos de ejemplo para ver el módulo con contenido: entregas activas y
@@ -413,31 +723,6 @@ export class SeedRepository {
     }
 
     console.log("Empleados creados");
-  }
-
-  async createCategoriesArticles() {
-    for (const category of categoriesArticles) {
-      await prisma.article_categories.create({
-        data: {
-          id: category.id,
-          name: category.name,
-          description: category.description,
-        },
-      });
-    }
-    console.log("Categorías de artículos creadas");
-  }
-
-  async createArticles() {
-    for (const article of articlesData) {
-      await prisma.articles.create({
-        data: {
-          ...article,
-          status: article.status as article_status,
-        },
-      });
-    }
-    console.log("Artículos creados");
   }
 
   async createFakeClientsAndReservations() {
